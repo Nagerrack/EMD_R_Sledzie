@@ -4,6 +4,7 @@ author: "Adam Dębczak, ITI"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
   html_document: 
+    keep_md: true
     toc: true
     toc_float: true
 ---
@@ -53,6 +54,7 @@ Z dużego wpływu temperatury przy powierzchni wody (`sst`) na podejmowaną prze
 ## Wstępne przetwarzanie
 
 #### Wykorzystane biblioteki
+
 ```{r, results='hide', warning=FALSE, message=FALSE}
 library(reshape2)
 library(plyr)
@@ -71,6 +73,7 @@ library(nnet)
 
 
 #### Powtarzalność wyników
+
 ```{r}
 set.seed(10)
 ```
@@ -78,11 +81,13 @@ set.seed(10)
 #### Wczytywanie danych
 
 Wartości puste oznaczone są znakiem "?", przy wczywaniu zbioru korzystamy z parametru `na.strings` do zastąpienia ich wartością `NA`
+
 ```{r}
 data <- read.csv("sledzie.csv", header=TRUE, na.strings = "?")
 ```
 
 #### Brakujące dane według kolumn
+
 ```{r, warning=FALSE,message=FALSE}
 nmissing <- function(x) sum(is.na(x))
 
@@ -105,6 +110,7 @@ Liczba wierszy po usunięciu pustych wartości: `r nrows_data_clean`
 
 
 #### Przykładowe wartości ze zbioru
+
 ```{r, echo=FALSE,warning=FALSE,message=FALSE}
 knitr::kable(data_clean[sample(seq_len(nrow(data_clean)), size = 5),])
 ```
@@ -142,6 +148,7 @@ custom_summary <- function(column){
 ### Długość złowionego śledzia **length**
 
 Na histogramie długości złowionego śledzia wyraźnie rysuje się rozkład normalny. Odchylenie standardowe jest relatywnie niskie, równe jest 1,65 cm.
+
 ```{r, echo=FALSE}
 
 ggplot(data_clean, aes(length)) + 
@@ -155,6 +162,7 @@ custom_summary(data_clean$length)
 ### Dostępność planktonu **cfin1** 
 
 Dostępność planktonu `cfin1` w okresie pomiarów była zdecydowanie niska, rozkład wartości jest w ponad 80% zdominowany przez wartość minimalną. Zdarzają się nieliczne wysokie wartości.
+
 ```{r, echo=FALSE}
 ggplot(data_clean, aes(cfin1)) + 
   geom_histogram(aes(y = stat(count) / sum(count)),bins=30, colour="black", fill= "#8b4513")+
@@ -168,6 +176,7 @@ custom_summary(data_clean$cfin1)
 ### Dostępność planktonu **cfin2**
 
 Podobnie jak w przypadku `cfin1`, rozkład `cfin2` jest zdominowany przez niskie wartości, jednak w znacznie mniejszym stopniu. W tym przypadku również występują wyższe wartości cechy, jednak tutaj układają się w widoczne grupy.
+
 ```{r, echo=FALSE}
 ggplot(data_clean, aes(cfin2)) + 
   geom_histogram(aes(y = stat(count) / sum(count)),bins=30, colour="black", fill= "#006400")+
@@ -180,6 +189,7 @@ custom_summary(data_clean$cfin2)
 ### Dostępność planktonu **chel1**
 
 Analogicznie jak pozostałych przypadkach widoczna jest niska dostępność planktonu `chel1`.
+
 ```{r, echo=FALSE}
 ggplot(data_clean, aes(chel1)) + 
   geom_histogram(aes(y = stat(count) / sum(count)),bins=30, colour="black", fill= "#000080")+
@@ -194,6 +204,7 @@ custom_summary(data_clean$chel1)
 ### Dostępność planktonu **chel2**
 
 Dostępność `chel2` w całym zbiorze jest dość zróżnicowana, w rozkładzie występuje dużo różnych wartości o podobnej częstości występowania.
+
 ```{r, echo=FALSE}
 ggplot(data_clean, aes(chel2)) + 
   geom_histogram(aes(y = stat(count) / sum(count)),bins=30, colour="black", fill= "#ff0000")+
@@ -245,6 +256,7 @@ custom_summary(data_clean$fbar)
 ### Roczny narybek **recr**
 
 Zmienna `recr` przedstawia roczny narybek reprezentowany w postaci liczby złowionych ryb, wartości liczbowe osiągają dość wysokie wartości, niejednokrotnie przekraczające milion.
+
 ```{r, echo=FALSE}
 ggplot(data_clean, aes(recr)) + 
   geom_histogram(aes(y = stat(count) / sum(count)),bins=30, colour="black", fill= "#00ff00")+
@@ -306,6 +318,7 @@ custom_summary(data_clean$sal)
 ### Miesiąc połowu **xmonth**
 
 Dane dotyczące miesiąca mają w przybliżeniu rozkład normalny, większość pomiarów pochodzi z okresu letnio-jesiennego.
+
 ```{r, echo=FALSE}
 
 ggplot(data_clean, aes(xmonth)) + 
@@ -332,6 +345,7 @@ custom_summary(data_clean$nao)
 
 
 ## Zależności między zmiennymi
+
 ```{r, echo= FALSE}
 get_upper_tri <- function(cormat){
     cormat[lower.tri(cormat)]<- NA
@@ -394,6 +408,7 @@ ggplot(data=data_1000, aes(x=fbar, y=cumf)) + geom_point()
 
 
 W tym przypadku mamy do czynienia z negatywną korelacją zmiennych `totaln` i `cumf`. Siła korelacji jest mniejsza niż w poprzednich przypadkach, jednak wciąż można łatwo dostrzec malejący trend.
+
 ```{r, echo=FALSE}
 ggplot(data=data_1000, aes(x=totaln, y=cumf)) + geom_point()
 
@@ -403,6 +418,7 @@ ggplot(data=data_1000, aes(x=totaln, y=cumf)) + geom_point()
 ## Zmiana długości śledzia w czasie
 
 Zaprezentowany wykres, celem zwiększenia czytelności, jest przygotowany na bazie próbki 1000 pomiarów. Dzięki wygładzonej linii średniej można łatwo dostrzec jaki był kształt trendu w czasie. Interaktywny wykres pozwala dokładnie prześledzić zmianę wartości, na wykresie wyraźnie widać, że po około 16000. próbce średnia długość śledzia zaczyna spadać, dzieje się tak aż do końca badanego okresu.
+
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 
 ggplotly(ggplot(data=data_1000, aes(x=X, y=length)) + geom_point()+ geom_smooth(span=0.5))
@@ -412,6 +428,7 @@ ggplotly(ggplot(data=data_1000, aes(x=X, y=length)) + geom_point()+ geom_smooth(
 ## Budowa regresora oraz pomiar jakości predykcji
 
 ### Podział zbioru
+
 ```{r}
 
 train_p <- 0.7
@@ -430,6 +447,7 @@ test_set  <- test_set[-idx_valid,]
 ```
 
 Rozmiary zbiorów: treningowego, walidacyjnego oraz testowego
+
 ```{r}
 dim(train_set)
 dim(valid_set)
@@ -437,6 +455,7 @@ dim(test_set)
 ```
 
 ### Regresja liniowa
+
 ```{r}
 
 simple_regr <- lm(length~. ,data = train_set)
@@ -444,6 +463,7 @@ simple_prediction <- predict(simple_regr, test_set[,-1])
 ```
 
 Podsumowanie parametrów modelu regresji `lm`
+
 ```{r}
 summary(simple_regr)
 ```
@@ -458,6 +478,7 @@ RMSE `r RMSE(simple_prediction,test_set$length)`
 ### XGBoost
 
 Przygotowanie zbioru do wersji kompatybilnej z XGBoost
+
 ```{r}
 
 xgb_train_set <- xgb.DMatrix(data = as.matrix(train_set[,-1]), label = train_set$length)
@@ -506,6 +527,7 @@ plot_features(explanation)
 
 
 W przypadku większej ilości przypadków można je zwizualizować na wykresie w postaci heatmap.
+
 ```{r, echo= FALSE ,warning=FALSE, message=FALSE}
 train_sample <- train_set[,-1][sample(seq_len(nrow(train_set)), size = 25),]
 
@@ -515,6 +537,7 @@ plot_explanations(explanation)
 ```
 
 XGBoost oferuje wbudowane feature importance mierzone przy pomocy parametru `gain`. Pośród użytych atrybutów zdecydowanie dominuje `sst`, mając ponad połowę z całego zysku przy podejmowaniu decyzji. Następny jest atrybut `recr` mający ponaddwukrotnie większą ważność od swojego następnika. Pozostałe zmienne mają już mniejszy, ale bardziej równomierny wkład w decyzję.
+
 ```{r,warning=FALSE, message=FALSE}
 importanceRaw <- xgb.importance(feature_names = colnames(test_set[,-1]), model = xg, data = xgb_test_set)
 xgb.plot.importance(importance_matrix = importanceRaw)
@@ -522,6 +545,7 @@ xgb.plot.importance(importance_matrix = importanceRaw)
 ```
 
 Z dużego wpływu temperatury przy powierzchni wody (`sst`) na podejmowaną przez model decyzję można by wnioskować, że drobny wzrost temperatury (mniej więcej od podobnego okresu, gdy długość śledzia zaczęła spadać) mógł mieć wpływ na zmniejszenie rozmiaru poławianych śledzi.
+
 ```{r, echo=FALSE,warning=FALSE, message=FALSE}
 ggplot(data=data_clean, aes(x=X)) + geom_point(aes(y=sst),colour="red")+ geom_smooth(aes(x=X, y=sst),span=0.5) + geom_point(aes(y=length),colour="green")+ geom_smooth(aes(x=X, y=length),span=0.5) + labs(y="sst(red), length(green)")
 ```
